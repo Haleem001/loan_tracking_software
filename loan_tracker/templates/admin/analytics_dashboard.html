@@ -1,0 +1,91 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Loan Requests</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="loanRequestsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Loan Transactions</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="loanTransactionsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% url 'admin:generate_all_users_report' %}" class="btn btn-primary">Download Full Report</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Loan Requests Chart
+    var ctxRequests = document.getElementById('loanRequestsChart').getContext('2d');
+    var loanRequestsChart = new Chart(ctxRequests, {
+        type: 'bar',
+        data: {
+            labels: ['Approved', 'Rejected', 'Pending'],
+            datasets: [{
+                label: 'Loan Requests',
+                data: [{{ approved_count }}, {{ rejected_count }}, {{ pending_count }}],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(255, 206, 86, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 206, 86, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Loan Transactions Chart
+    var ctxTransactions = document.getElementById('loanTransactionsChart').getContext('2d');
+    var loanTransactionsChart = new Chart(ctxTransactions, {
+        type: 'line',
+        data: {
+            labels: {{ transaction_dates|safe }},
+            datasets: [{
+                label: 'Loan Transactions',
+                data: {{ transaction_amounts }},
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -16,6 +16,10 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.urls import path
 from .views import generate_user_report
+from django.apps import apps
+from django.template.response import TemplateResponse
+
+
 
 
 class UserAdmin(BaseUserAdmin):
@@ -54,14 +58,35 @@ class UserAdmin(BaseUserAdmin):
     def generate_all_users_report(self, request, queryset):
             return HttpResponseRedirect(reverse('admin:generate_all_users_report'))
     generate_all_users_report.short_description = "Generate report for all users"
+
+    def analytics_dashboard_view(self, request):
+        Loan = apps.get_model('loans', 'Loan')
+        LoanRequest = apps.get_model('loans', 'LoanRequest')
+        LoanTransaction = apps.get_model('loans', 'LoanTransaction')
+        context = self.admin_site.each_context(request)
+        context['title'] = "Analytics Dashboard"
+
+    # Get data for charts
+        loan_requests = LoanRequest.objects.all()
+        context['approved_count'] = loan_requests.filter(status='APPROVED').count()
+        context['rejected_count'] = loan_requests.filter(status='REJECTED').count()
+        context['pending_count'] = loan_requests.filter(status='PENDING').count()
+
+        transactions = LoanTransaction.objects.order_by('payment_date')
+        context['transaction_dates'] = [t.payment_date.strftime('%Y-%m-%d') for t in transactions]
+        context['transaction_amounts'] = [float(t.payment) for t in transactions]
+
+        return TemplateResponse(request, "admin/analytics_dashboard.html", context)
     
     def get_urls(self):
             urls = super().get_urls()
             custom_urls = [
                 path('generate_user_report/<int:user_id>/', self.admin_site.admin_view(generate_user_report), name='generate_user_report'),
                 path('generate_all_users_report/', self.admin_site.admin_view(generate_user_report), name='generate_all_users_report'),
+                path('analytics-dashboard/', self.admin_site.admin_view(self.analytics_dashboard_view), name='analytics-dashboard'),
             ]
             return custom_urls + urls
+    
     
 
     

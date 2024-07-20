@@ -205,6 +205,13 @@ JAZZMIN_SETTINGS = {
         {"model": "users.CustomUser"},
         {"model": "loans.LoanRequest"},
     ],
+
+    "custom_links": {
+        "users": [{
+            "name": "Analytics Dashboard",
+            "url": "admin:analytics-dashboard",
+            "icon": "fas fa-chart-bar",
+        }]},
     
     "show_sidebar": True,
     "navigation_expanded": True,
