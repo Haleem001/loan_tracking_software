@@ -12,8 +12,8 @@ from drf_yasg import openapi
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import FoodItem, CartItem, LoanRequest
-from .serializers import FoodItemSerializer, CartItemSerializer
+from .models import FoodItem, CartItem, LoanRequest, LoanRequestItem
+from .serializers import FoodItemSerializer, CartItemSerializer, LoanHistorySerializer
 from django.contrib import messages
 from django.http import HttpResponse
 import csv
@@ -292,57 +292,47 @@ def view_cart(request):
 import logging
 
 logger = logging.getLogger(__name__)
-
 @api_view(['POST'])
 def checkout(request):
-    """
-    Handles the checkout process for a user's cart items.
-    
-    This view is responsible for creating a new LoanRequest instance, associating the user's cart items with it, calculating the total amount, and clearing the user's cart. The serialized LoanRequest instance is then returned in the response.
-    
-    Args:
-        request (django.http.request.HttpRequest): The HTTP request object.
-    
-    Returns:
-        django.http.response.Response: A response containing the serialized LoanRequest instance.
-    
-    Raises:
-        django.http.response.Response: A response with an error message and appropriate status code if an error occurs during the checkout process.
-    """
-        
-    # Ensure the user is authenticated
     if not request.user.is_authenticated:
         return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
     try:
-        # Create the LoanRequest instance first
-        loan_request = LoanRequest.objects.get(user=request.user, requested = False)
-        
+        repayment_date = request.data.get('repayment_date')
+        if not repayment_date:
+            return Response({'error': 'Repayment date is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch cart items for the authenticated user
+        loan_request = LoanRequest.objects.get(user=request.user, requested=False)
         cart_items = CartItem.objects.filter(user=request.user)
 
         if not cart_items.exists():
             return Response({'error': 'Cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Associate CartItems with LoanRequest using LoanRequestCartItem
-        
-
-        # Calculate the total amount
         loan_request.total_amount = sum(item.total_price for item in cart_items)
         loan_request.requested = True
+        loan_request.repayment_date = repayment_date
         loan_request.save()
+
+        # Create LoanRequestItem instances instead of deleting cart items
+        for cart_item in cart_items:
+            LoanRequestItem.objects.create(
+                loan_request=loan_request,
+                food_item=cart_item.food_item,
+                quantity=cart_item.quantity,
+                price=cart_item.total_price
+            )
 
         # Clear the user's cart
         cart_items.delete()
 
-        # Serialize and return the loan request
-        serializer = LoanRequestSerializer(loan_request)
+        
+        serializer = LoanHistorySerializer(loan_request)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     except Exception as e:
         logger.error(f"Error during checkout: {str(e)}")
         return Response({'error': 'An error occurred during checkout'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class LoanRequestViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LoanRequestSerializer
@@ -351,4 +341,15 @@ class LoanRequestViewSet(viewsets.ReadOnlyModelViewSet):
         return LoanRequest.objects.filter(user=self.request.user)
 
  
+
+
+class LoanHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        loan_requests = LoanRequest.objects.filter(user=request.user, requested=True)
+        serializer = LoanHistorySerializer(loan_requests, many=True)
+        return Response(serializer.data)
+
+
 

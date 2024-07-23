@@ -116,10 +116,10 @@ class LoanRequest(models.Model):
     
     The `reject` method rejects the loan request by updating the status of the loan request.
     """
-        
+    reference_number = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='loan_requests_user')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True,blank=True)
-    creation_date = models.DateTimeField(auto_now_add=True)
+    creation_date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=[
         ('PENDING', 'Pending'),
         ('APPROVED', 'Approved'),
@@ -129,7 +129,7 @@ class LoanRequest(models.Model):
     cart_items = models.ManyToManyField(CartItem)
     requested = models.BooleanField(default=False)
     
-    status_date = models.DateTimeField(null=True, blank=True, default=None)
+    status_date = models.DateField(null=True, blank=True, default=None)
     repayment_date = models.DateField(null=True, blank=True, default=None)
     payable_loan = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
     payment_status = models.CharField(max_length=20, choices=[
@@ -254,6 +254,14 @@ class LoanTransaction(models.Model):
 
 
 
+class LoanRequestItem(models.Model):
+    loan_request = models.ForeignKey(LoanRequest, on_delete=models.CASCADE, related_name='loan_items')
+    food_item = models.ForeignKey(FoodItem, on_delete=models.SET_NULL, null=True)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
     
+    def __str__(self):
+        return f"{self.quantity} of {self.food_item.name} for {self.loan_request}"
+
 
 

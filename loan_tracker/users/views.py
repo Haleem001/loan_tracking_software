@@ -7,6 +7,14 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .serializers import RegisterUserSerializer, ChangePasswordSerializer, UserSerializer
 import csv
 from django.http import HttpResponse
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated , AllowAny
+from .models import CustomUser
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.conf import settings
+from django.core.mail import send_mail
+from rest_framework import status
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -99,3 +107,37 @@ def generate_user_report(request, user_id=None):
             writer.writerow(row)
 
     return response
+
+
+
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        try:
+            user = CustomUser.objects.get(email=email)
+            token = RefreshToken.for_user(user).access_token
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/{str(token)}/"
+            send_mail(
+                'Password Reset Request',
+                f'Click the link to reset your password: {reset_url}',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email]
+            )
+            return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, token):
+        password = request.data.get('password')
+        try:
+            user = RefreshToken(token).get_user()
+            user.set_password(password)
+            user.save()
+            return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": "Invalid token or token expired"}, status=status.HTTP_400_BAD_REQUEST)

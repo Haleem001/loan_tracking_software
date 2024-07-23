@@ -2,7 +2,7 @@ from django.urls import path, include
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
-from .views import  UserDashboardAPI,  LoanRequestAPI, LoanPaymentAPI, UserTransactionAPI, UserLoanHistoryAPI
+from .views import  UserDashboardAPI,  LoanRequestAPI, LoanPaymentAPI, UserTransactionAPI, UserLoanHistoryAPI, LoanHistoryView
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
@@ -31,6 +31,7 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('user-dashboard/', UserDashboardAPI.as_view(), name='user-dashboard-api'),
     path('loan-request/', LoanRequestAPI.as_view(), name='api-loan-request'),
+   path('loan-history/', LoanHistoryView.as_view(), name='loan-history'),
     path('loan-payment/', LoanPaymentAPI.as_view(), name='api-loan-payment'),
     path('user-transactions/', UserTransactionAPI.as_view(), name='api-user-transactions'),
     path('user-loan-history/', UserLoanHistoryAPI.as_view(), name='api-user-loan-history'),

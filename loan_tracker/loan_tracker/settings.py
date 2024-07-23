@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'loan_tracker.middleware.JWTMiddleware',
 ]
 
 
@@ -161,12 +162,20 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': 'your-secret-key',
+    'VERIFYING_KEY': '',
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'JTI_CLAIM': 'jti',
 }
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 465  # Gmail SMTP port
@@ -179,8 +188,22 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 CRON_CLASSES = [
     "loans.cron.SendRepaymentReminders",
 ]
-
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
@@ -191,17 +214,18 @@ CORS_ALLOW_METHODS = [
 ]
 
 JAZZMIN_SETTINGS = {
-    "site_title": "Loan Tracker Admin",
-    "site_header": "Loan Tracker",
-    "site_brand": "Loan Tracker",
-    "welcome_sign": "Welcome to the Loan Tracker Admin",
+    "site_title": "Loan Tracking Software Admin",
+    "site_header": "Loan Tracking Software",
+    "site_brand": "Loan Tracking Software",
+    "welcome_sign": "Welcome to the Loan Tracking Software Admin",
     "copyright": "",
-    "search_model": ["loans.Loan", "users.CustomUser"],
+    "search_model": [ "users.CustomUser", "loans.LoanRequest"],
     "user_avatar": None,
     
     "topmenu_links": [
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "Support", "url": "https://github.com/yourusername/loan_tracker", "new_window": True},
+        {"name": "Analytics Dashboard", "url": "admin:analytics-dashboard", "permissions": ["auth.view_user"]},
+        {"name": "Support", "url": "https://github.com/Haleem001/loan_tracking_software", "new_window": True},
         {"model": "users.CustomUser"},
         {"model": "loans.LoanRequest"},
     ],
@@ -278,3 +302,5 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     }
 }
+
+FRONTEND_URL = 'http://127.0.0.2:3000'

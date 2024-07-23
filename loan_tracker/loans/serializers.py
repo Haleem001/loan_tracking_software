@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LoanRequest , LoanTransaction, CartItem
+from .models import LoanRequest , LoanTransaction, CartItem, LoanRequestItem
 from django.conf import settings
 from django.apps import apps
 
@@ -59,7 +59,20 @@ class LoanRequestSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = LoanRequest
-        fields = ['id', 'user',  'total_amount', 'creation_date', 'repayment_date', 'payable_loan', 'payment_status']
+        fields = ['id', 'user',  'total_amount', 'creation_date', 'repayment_date', 'payable_loan', 'payment_status', 'status']
         read_only_fields = ['user', 'total_amount', 'payable_loan', 'payment_status']
 
     
+class LoanRequestItemSerializer(serializers.ModelSerializer):
+    food_item_name = serializers.CharField(source='food_item.name')
+    
+    class Meta:
+        model = LoanRequestItem
+        fields = ['food_item_name', 'quantity', 'price']
+
+class LoanHistorySerializer(serializers.ModelSerializer):
+    loan_items = LoanRequestItemSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = LoanRequest
+        fields = ['id', 'total_amount', 'creation_date', 'status', 'loan_items', 'status', 'repayment_date', 'reference_number']
