@@ -18,65 +18,33 @@ from django.contrib import messages
 from django.http import HttpResponse
 import csv
 from users.models import CustomUser
+
+
 class UserDashboardAPI(APIView):
-    """
-    API endpoint for retrieving user dashboard data.
-    
-    This API endpoint allows authenticated users to retrieve a summary of their loan requests, approved/rejected requests, total loan amounts, and other relevant data for their dashboard.
-    
-    The `UserDashboardAPI` class provides the following functionality:
-    
-    - `GET /user-dashboard/`: Retrieve the user's dashboard data, including the number of loan requests, approved/rejected requests, total loan amounts, current loan, and payment loan.
-    
-    The API uses the `UserDashboardSerializer` to serialize the dashboard data and return it in the response.
-    """
-        
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        requestLoan = LoanRequest.objects.filter(
-            user=request.user
-        ).count()
-        approved = LoanRequest.objects.filter(
-            user=request.user
-        ).filter(status='APPROVED').count()
-
-        rejected = l=LoanRequest.objects.filter(
-            user=request.user
-        ).filter(status='REJECTED').count()
-
-        totalLoan = Loan.objects.filter(user=request.user).aggregate(
-            Sum('total_loan')
-        )['total_loan__sum'] or 0
-
-        totalPayable = Loan.objects.filter(user=request.user).aggregate(
-            Sum('payable_loan')
-        )['payable_loan__sum'] or 0
-
-        totalPaid = LoanTransaction.objects.filter(user=request.user).aggregate(
-            Sum('payment')
-        )['payment__sum'] or 0
-        current_loan = totalPayable
-        payment_loan = LoanRequest.objects.filter(user=request.user).aggregate(
-            Sum('payable_loan')
-        )['payable_loan__sum'] or 0
-        
-        
+        requestLoan = LoanRequest.objects.filter(user=request.user).count()
+        approved = LoanRequest.objects.filter(user=request.user, status='APPROVED').count()
+        rejected = LoanRequest.objects.filter(user=request.user, status='REJECTED').count()
+        totalLoan = Loan.objects.filter(user=request.user).aggregate(Sum('total_loan'))['total_loan__sum'] or 0
+        currentLoan = Loan.objects.filter(user=request.user).aggregate(Sum('payable_loan'))['payable_loan__sum'] or 0
+        paidLoan = totalLoan - currentLoan
+        totalPaid = LoanTransaction.objects.filter(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
 
         data = {
             'request': requestLoan,
             'approved': approved,
             'rejected': rejected,
-            'totalLoan': totalLoan,
-            'totalPayable': totalPayable,
-            'totalPaid': totalPaid,
-            'current_loan': current_loan,
-            'payment_loan': payment_loan,
-            
+            'total_loan': totalLoan,
+            'current_loan': currentLoan,
+            'paid_loan': paidLoan,
+            'total_paid': totalPaid,
         }
 
         serializer = UserDashboardSerializer(data)
         return Response(serializer.data)
+
     
 class LoanRequestAPI(APIView):
     """
@@ -170,11 +138,22 @@ class LoanPaymentAPI(APIView):
     def post(self, request):
         serializer = LoanTransactionSerializer(data=request.data)
         if serializer.is_valid():
-            amount = serializer.validated_data['payment']
-            loan = Loan.objects.get(user=request.user)
-            transaction = loan.make_payment(amount)
-            return Response({"message": "Payment successful", "transaction_id": str(transaction.transaction)}, status=status.HTTP_200_OK)
+            amount = request.data.get('amount')
+            try:
+                loan = Loan.objects.get(user=request.user)
+                transaction = loan.make_payment(amount)
+                serializer.save(user=request.user, loan=loan, amount=amount)
+                return Response({"message": "Payment successful", "transaction_id": str(transaction.transaction_id)}, status=status.HTTP_200_OK)
+            except Loan.DoesNotExist:
+                return Response({"error": "No active loan found for this user"}, status=status.HTTP_400_BAD_REQUEST)
+            except ValueError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    
+
+    
+
 
     
     

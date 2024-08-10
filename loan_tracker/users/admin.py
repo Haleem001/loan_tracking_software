@@ -74,7 +74,7 @@ class UserAdmin(BaseUserAdmin):
 
         transactions = LoanTransaction.objects.order_by('payment_date')
         context['transaction_dates'] = [t.payment_date.strftime('%Y-%m-%d') for t in transactions]
-        context['transaction_amounts'] = [float(t.payment) for t in transactions]
+        context['transaction_amounts'] = [float(t.amount) for t in transactions]
 
         return TemplateResponse(request, "admin/analytics_dashboard.html", context)
     

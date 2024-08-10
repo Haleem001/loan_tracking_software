@@ -13,7 +13,7 @@ class CartItemAdmin(admin.ModelAdmin):
 class FoodItemAdmin(admin.ModelAdmin):
     list_display = ['name', 'price']
 class LoanTransactionAdmin(admin.ModelAdmin):
-    list_display = ['user', 'payment', 'payment_date']
+    list_display =  ['transaction_id','user', 'amount', 'payment_date']
 class LoanAdmin(admin.ModelAdmin):
     list_display = ['user', 'total_loan', 'payable_loan']
 class LoanRequestAdmin(admin.ModelAdmin):

@@ -208,7 +208,7 @@ class Loan(models.Model):
         transaction = LoanTransaction.objects.create(
             loan=self,
             user=self.user,
-            payment=amount
+            amount=amount
         )
         return transaction
 
@@ -229,28 +229,31 @@ class LoanTransaction(models.Model):
     
     The `save` method performs an atomic transaction to update the `payable_loan` field of the associated loan by subtracting the payment amount. If the payment amount exceeds the payable loan amount, a `ValueError` is raised.
     """
-        
+    transaction_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)    
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='transaction_user')
     loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='transactions')
-    transaction = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False)
-    payment = models.PositiveIntegerField(default=0)
+    
+    amount = models.PositiveIntegerField(default=0)
     payment_date = models.DateField(auto_now_add=True)
+    payment_status = models.CharField(max_length=20, choices=[
+        ('PENDING', 'Pending'),
+        ('CONFIRMED', 'Confirmed'),
+        ('UNPAID', 'Unpaid')
+    ], default='PENDING')
 
     def __str__(self):
         return self.user.username
     def save(self, *args, **kwargs):
-        with transaction.atomic():
-            if self.payment > self.loan.payable_loan:
-                raise ValueError("Payment amount exceeds the payable loan amount")
-            
-            super().save(*args, **kwargs)
-            
-            self.loan.payable_loan = F('payable_loan') - self.payment
-            self.loan.save()
-            
-            logger.info(f"Loan payment of {self.payment} processed for loan {self.loan.id}")
+
+        self.loan.payable_loan = F('payable_loan') - self.amount
+        self.loan.save()  
+        logger.info(f"Loan payment of {self.amount} processed for loan {self.loan.id}")
+        super().save(*args, **kwargs)
+
+    
+    
 
 
 

@@ -16,6 +16,10 @@ from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework import status
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -100,7 +104,7 @@ def generate_user_report(request, user_id=None):
 
             if i < len(loan_transactions):
                 trans = loan_transactions[i]
-                row.extend([trans['payment'], trans['payment_date']])
+                row.extend([trans['amount'], trans['payment_date']])
             else:
                 row.extend(['', ''])
 
@@ -140,4 +144,7 @@ class ResetPasswordView(APIView):
             user.save()
             return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"error": "Invalid token or token expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+            logger.error(f"Error : {str(e)}")
+
+            return Response({"error": "Invalid token or token expired"},status=status.HTTP_400_BAD_REQUEST)

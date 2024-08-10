@@ -1,21 +1,20 @@
 from rest_framework import serializers
-from .models import LoanRequest , LoanTransaction, CartItem, LoanRequestItem
+from .models import LoanRequest , LoanTransaction, CartItem, LoanRequestItem, FoodItem
 from django.conf import settings
 from django.apps import apps
 
 
-
-
 class UserDashboardSerializer(serializers.Serializer):
-
     request = serializers.IntegerField()
     approved = serializers.IntegerField()
     rejected = serializers.IntegerField()
-    totalLoan = serializers.DecimalField(max_digits=10, decimal_places=2)
-    totalPayable = serializers.DecimalField(max_digits=10, decimal_places=2)
-    totalPaid = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_loan = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+    paid_loan = serializers.DecimalField(max_digits=10, decimal_places=2)
     current_loan = serializers.DecimalField(max_digits=10, decimal_places=2)
-    payment_loan = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_paid = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+
     
 
 # class LoanRequestSerializer(serializers.ModelSerializer):
@@ -24,12 +23,9 @@ class UserDashboardSerializer(serializers.Serializer):
 #         fields = ['id',  'total_amount', 'repayment_date', 'user']
 
 class LoanTransactionSerializer(serializers.ModelSerializer):
-    payment = serializers.DecimalField(max_digits=10, decimal_places=2)
     class Meta:
-        CustomUser = apps.get_model('users', 'CustomUser')
-        user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
         model = LoanTransaction
-        fields = ['payment', 'payment_date', 'user']
+        fields = ['transaction_id','amount', 'payment_date','user']
 
 class GetLoanRequestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,7 +36,7 @@ class GetLoanRequestSerializer(serializers.ModelSerializer):
 
 
 
-from .models import FoodItem, CartItem, LoanRequest
+
 
 class FoodItemSerializer(serializers.ModelSerializer):
     class Meta:
