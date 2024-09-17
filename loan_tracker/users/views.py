@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import CustomUser
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from .serializers import RegisterUserSerializer, ChangePasswordSerializer, UserSerializer
+from .serializers import RegisterUserSerializer, ChangePasswordSerializer, UserSerializer, UserProfileSerializer
 import csv
 from django.http import HttpResponse
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -45,14 +45,17 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
-class ChangePasswordView(generics.UpdateAPIView):
-    """
-    Used for users to change passwords based on their old password
-    """
-    queryset = CustomUser.objects.all()
-    permission_classes = (IsAuthenticated)
-    serializer_class = ChangePasswordSerializer
 
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Password changed successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 class UserList(generics.ListAPIView):
     """List all users this is only available for an admin user"""
@@ -81,7 +84,7 @@ def generate_user_report(request, user_id=None):
     response['Content-Disposition'] = f'attachment; filename="user_loan_report.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Username', 'Total Loans', 'Payable Loans', 'Loan Request Amount', 'Loan Request Status', 'Loan Request Date', 'Loan Transaction Payment', 'Loan Transaction Date'])
+    writer.writerow(['Username', 'Total Loans', 'Payable Loans', 'Loan Request Amount', 'Loan Request Status', 'Loan Request Date', 'Loan Payment Amount', 'Loan Transaction Date'])
 
     for user in users:
         report_data = user.generate_report()
@@ -148,3 +151,14 @@ class ResetPasswordView(APIView):
             logger.error(f"Error : {str(e)}")
 
             return Response({"error": "Invalid token or token expired"},status=status.HTTP_400_BAD_REQUEST)
+        
+
+class EditProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        

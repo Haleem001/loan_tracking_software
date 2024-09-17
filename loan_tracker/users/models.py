@@ -152,5 +152,5 @@ class CustomUser(AbstractUser):
             'username': self.username,
             'loans': [{'total_loan': loan.total_loan, 'payable_loan': loan.payable_loan} for loan in loans],
             'loan_requests': [{'total_amount': req.total_amount, 'status': req.status, 'creation_date': req.creation_date} for req in loan_requests],
-            'loan_transactions': [{'payment': trans.payment, 'payment_date': trans.payment_date} for trans in loan_transactions]
+            'loan_transactions': [{'amount': trans.amount, 'payment_date': trans.payment_date} for trans in loan_transactions]
         }
