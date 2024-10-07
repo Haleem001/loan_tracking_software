@@ -12,6 +12,7 @@ import {
   Divider,
 } from '@chakra-ui/react';
 import apiClient from '../utils/http-common';
+import WithSubnavigation from '../components/NavBar.tsx';
 
 const EditProfile = () => {
   const [first_name, setFirstName] = useState('');
@@ -95,6 +96,8 @@ const EditProfile = () => {
   };
 
   return (
+    <>
+    <WithSubnavigation />
     <Container maxW="container.md" py={10}>
       <VStack spacing={8} align="stretch">
         <Box>
@@ -170,6 +173,7 @@ const EditProfile = () => {
         </Box>
       </VStack>
     </Container>
+    </>
   );
 };
 
