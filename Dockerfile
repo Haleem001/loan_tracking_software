@@ -1,4 +1,4 @@
-FROM python:3.9.0-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -10,9 +10,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY loan_tracker/ /app/loan_tracker/
 
 # Set environment variables
-ENV PYTHON_VERSION=3.9.0
+ENV PYTHON_VERSION=3.12.0
 
-# Expose the application port (adjust if necessary)
+# Expose the application port
 EXPOSE 8000
 
 # Run the application
