@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: loan-tracker-backend
+    env: python
+    plan: free
+    buildCommand: cd loan_tracker && pip install -r requirements.txt
+    startCommand: gunicorn loan_tracker.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+
+  - type: web
+    name: loan-tracker-frontend
+    env: static
+    plan: free
+    buildCommand: cd loan-tracker && npm install && npm run build
+    staticPublishPath: ./loan-tracker/build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

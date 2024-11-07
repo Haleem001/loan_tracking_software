@@ -95,17 +95,27 @@ WSGI_APPLICATION = 'loan_tracker.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'loan-tracker',
+#         'USER': 'postgres',
+#         'PASSWORD': '200684',
+#         'HOST': 'localhost',  
+#         'PORT': '5432',      
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'loan-tracker',
-        'USER': 'postgres',
-        'PASSWORD': '200684',
-        'HOST': 'localhost',  
-        'PORT': '5432',      
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
-
 
 
 # Password validation
@@ -199,10 +209,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
-CRON_CLASSES = [
-    "loans.cron.SendRepaymentReminders",
-]
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
