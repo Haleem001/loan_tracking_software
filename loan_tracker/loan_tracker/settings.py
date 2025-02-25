@@ -199,8 +199,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=360),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=3),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': False,
     'ALGORITHM': 'HS256',
@@ -341,4 +341,4 @@ JAZZMIN_UI_TWEAKS = {
     }
 }
 
-FRONTEND_URL = 'https://loantrackerfrontend.vercel.app'
+FRONTEND_URL = 'http://127.0.0.2:3000'
